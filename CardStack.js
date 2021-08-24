@@ -57,9 +57,10 @@ class CardStack extends Component {
         this.setState({ touchStart: new Date().getTime() });
       },
       onPanResponderMove: (evt, gestureState) => {
+        const swipedIndex = this.getSwipedIndex();
         const movedX = gestureState.moveX - gestureState.x0;
         const movedY = gestureState.moveY - gestureState.y0;
-        this.props.onSwipe(movedX, movedY);
+        this.props.onSwipe(movedX, movedY, swipedIndex);
         const { verticalSwipe, horizontalSwipe } = this.props;
         const dragDistance = this.distance((horizontalSwipe) ? gestureState.dx : 0, (verticalSwipe) ? gestureState.dy : 0);
         this.state.dragDistance.setValue(dragDistance);
@@ -67,7 +68,8 @@ class CardStack extends Component {
       },
       onPanResponderTerminationRequest: (evt, gestureState) => true,
       onPanResponderRelease: (evt, gestureState) => {
-        this.props.onSwipeEnd();
+        const swipedIndex = this.getSwipedIndex();
+        this.props.onSwipeEnd(swipedIndex);
         const currentTime = new Date().getTime();
         const swipeDuration = currentTime - this.state.touchStart;
         const {
@@ -199,6 +201,19 @@ class CardStack extends Component {
         useNativeDriver: this.props.useNativeDriver || false,
       }
     ).start();
+  }
+
+  getSwipedIndex() {
+    const {loop} = this.props;
+    const { sindex, cards } = this.state;
+
+    // index for the next card to be renderd
+    const nextCard = (loop) ? (Math.abs(sindex) % cards.length) : sindex;
+
+    // index of the swiped card
+    const swipedIndex = (loop) ? this.mod(nextCard - 2, cards.length) : nextCard - 2;
+
+    return swipedIndex
   }
 
   goBackFromTop() {
